@@ -134,12 +134,12 @@ function byteArrayToInt(byteArray, start4, end, isBigEndian, isSigned) {
   return value2;
 }
 function byteArrayToFloat(byteArray, start4, end, isBigEndian) {
-  const view3 = new DataView(byteArray.buffer);
+  const view4 = new DataView(byteArray.buffer);
   const byteSize = end - start4;
   if (byteSize === 8) {
-    return view3.getFloat64(start4, !isBigEndian);
+    return view4.getFloat64(start4, !isBigEndian);
   } else if (byteSize === 4) {
-    return view3.getFloat32(start4, !isBigEndian);
+    return view4.getFloat32(start4, !isBigEndian);
   } else {
     const msg = `Sized floats must be 32-bit or 64-bit on JavaScript, got size of ${byteSize * 8} bits`;
     throw new globalThis.Error(msg);
@@ -423,28 +423,6 @@ function do_map(loop$list, loop$fun, loop$acc) {
 function map2(list, fun) {
   return do_map(list, fun, toList([]));
 }
-function do_index_map(loop$list, loop$fun, loop$index, loop$acc) {
-  while (true) {
-    let list = loop$list;
-    let fun = loop$fun;
-    let index3 = loop$index;
-    let acc = loop$acc;
-    if (list.hasLength(0)) {
-      return reverse(acc);
-    } else {
-      let x = list.head;
-      let xs = list.tail;
-      let acc$1 = prepend(fun(x, index3), acc);
-      loop$list = xs;
-      loop$fun = fun;
-      loop$index = index3 + 1;
-      loop$acc = acc$1;
-    }
-  }
-}
-function index_map(list, fun) {
-  return do_index_map(list, fun, 0, toList([]));
-}
 function do_append(loop$first, loop$second) {
   while (true) {
     let first3 = loop$first;
@@ -543,29 +521,29 @@ function do_repeat(loop$a, loop$times, loop$acc) {
 function repeat(a, times) {
   return do_repeat(a, times, toList([]));
 }
-function do_split(loop$list, loop$n, loop$taken) {
+function do_take_while(loop$list, loop$predicate, loop$acc) {
   while (true) {
     let list = loop$list;
-    let n = loop$n;
-    let taken = loop$taken;
-    let $ = n <= 0;
-    if ($) {
-      return [reverse(taken), list];
+    let predicate = loop$predicate;
+    let acc = loop$acc;
+    if (list.hasLength(0)) {
+      return reverse(acc);
     } else {
-      if (list.hasLength(0)) {
-        return [reverse(taken), toList([])];
+      let first$1 = list.head;
+      let rest$1 = list.tail;
+      let $ = predicate(first$1);
+      if ($) {
+        loop$list = rest$1;
+        loop$predicate = predicate;
+        loop$acc = prepend(first$1, acc);
       } else {
-        let x = list.head;
-        let xs = list.tail;
-        loop$list = xs;
-        loop$n = n - 1;
-        loop$taken = prepend(x, taken);
+        return reverse(acc);
       }
     }
   }
 }
-function split(list, index3) {
-  return do_split(list, index3, toList([]));
+function take_while(list, predicate) {
+  return do_take_while(list, predicate, toList([]));
 }
 
 // build/dev/javascript/gleam_stdlib/gleam/result.mjs
@@ -1743,20 +1721,10 @@ var Attribute = class extends CustomType {
     this.as_property = as_property;
   }
 };
-var Event = class extends CustomType {
-  constructor(x0, x1) {
-    super();
-    this[0] = x0;
-    this[1] = x1;
-  }
-};
 
 // build/dev/javascript/lustre/lustre/attribute.mjs
 function attribute(name, value2) {
   return new Attribute(name, from(value2), false);
-}
-function on(name, handler) {
-  return new Event("on" + name, handler);
 }
 function class$(name) {
   return attribute("class", name);
@@ -2154,19 +2122,19 @@ var LustreClientApplication2 = class _LustreClientApplication {
   #model = null;
   #update = null;
   #view = null;
-  static start(flags, selector, init3, update2, view3) {
+  static start(flags, selector, init3, update2, view4) {
     if (!is_browser())
       return new Error(new NotABrowser());
     const root3 = selector instanceof HTMLElement ? selector : document.querySelector(selector);
     if (!root3)
       return new Error(new ElementNotFound(selector));
-    const app = new _LustreClientApplication(init3(flags), update2, view3, root3);
+    const app = new _LustreClientApplication(init3(flags), update2, view4, root3);
     return new Ok((msg) => app.send(msg));
   }
-  constructor([model, effects], update2, view3, root3 = document.body, isComponent = false) {
+  constructor([model, effects], update2, view4, root3 = document.body, isComponent = false) {
     this.#model = model;
     this.#update = update2;
-    this.#view = view3;
+    this.#view = view4;
     this.#root = root3;
     this.#effects = effects.all.toArray();
     this.#didUpdate = true;
@@ -2277,11 +2245,11 @@ var is_browser = () => globalThis.window && window.document;
 
 // build/dev/javascript/lustre/lustre.mjs
 var App = class extends CustomType {
-  constructor(init3, update2, view3, on_attribute_change) {
+  constructor(init3, update2, view4, on_attribute_change) {
     super();
     this.init = init3;
     this.update = update2;
-    this.view = view3;
+    this.view = view4;
     this.on_attribute_change = on_attribute_change;
   }
 };
@@ -2293,17 +2261,17 @@ var ElementNotFound = class extends CustomType {
 };
 var NotABrowser = class extends CustomType {
 };
-function application(init3, update2, view3) {
-  return new App(init3, update2, view3, new None());
+function application(init3, update2, view4) {
+  return new App(init3, update2, view4, new None());
 }
-function simple(init3, update2, view3) {
+function simple(init3, update2, view4) {
   let init$1 = (flags) => {
     return [init3(flags), none()];
   };
   let update$1 = (model, msg) => {
     return [update2(model, msg), none()];
   };
-  return application(init$1, update$1, view3);
+  return application(init$1, update$1, view4);
 }
 function start3(app, selector, flags) {
   return guard(
@@ -2539,9 +2507,9 @@ var Media = class extends CustomType {
   }
 };
 var PseudoSelector = class extends CustomType {
-  constructor(pseudo_selector, styles) {
+  constructor(pseudo_selector2, styles) {
     super();
-    this.pseudo_selector = pseudo_selector;
+    this.pseudo_selector = pseudo_selector2;
     this.styles = styles;
   }
 };
@@ -2574,9 +2542,9 @@ var MediaProperty = class extends CustomType {
   }
 };
 var PseudoProperty = class extends CustomType {
-  constructor(pseudo_selector, properties) {
+  constructor(pseudo_selector2, properties) {
     super();
-    this.pseudo_selector = pseudo_selector;
+    this.pseudo_selector = pseudo_selector2;
     this.properties = properties;
   }
 };
@@ -2775,12 +2743,12 @@ function handle_pseudo_selector(cache2, props, style2) {
       { value: style2 }
     );
   }
-  let pseudo_selector = style2.pseudo_selector;
+  let pseudo_selector2 = style2.pseudo_selector;
   let styles = style2.styles;
   let $ = compute_properties(cache2, styles, props.indent + 2);
   let cache$1 = $[0];
   let computed_props = $[1];
-  let _pipe = new PseudoProperty(pseudo_selector, computed_props.properties);
+  let _pipe = new PseudoProperty(pseudo_selector2, computed_props.properties);
   let _pipe$1 = ((_capture) => {
     return prepend2(computed_props.pseudo_selectors, _capture);
   })(_pipe);
@@ -3002,14 +2970,54 @@ function cache(strategy) {
 function property(field2, content) {
   return new Property(field2, content, false);
 }
-function align_items(align) {
-  return property("align-items", align);
+function border(border2) {
+  return property("border", border2);
 }
-function background_color(value2) {
-  return property("background-color", value2);
+function border_bottom_left_radius(border_bottom_left_radius2) {
+  let _pipe = to_string6(border_bottom_left_radius2);
+  return ((_capture) => {
+    return property("border-bottom-left-radius", _capture);
+  })(_pipe);
+}
+function border_bottom_right_radius(border_bottom_right_radius2) {
+  let _pipe = to_string6(border_bottom_right_radius2);
+  return ((_capture) => {
+    return property("border-bottom-right-radius", _capture);
+  })(_pipe);
 }
 function border_collapse(value2) {
   return property("border-collapse", value2);
+}
+function border_color(value2) {
+  return property("border-color", value2);
+}
+function border_left_color(value2) {
+  return property("border-left-color", value2);
+}
+function border_radius(border_radius2) {
+  return property("border-radius", to_string6(border_radius2));
+}
+function border_right_style(value2) {
+  return property("border-right-style", value2);
+}
+function border_right_width(value2) {
+  return property("border-right-width", to_string6(value2));
+}
+function border_top_left_radius(border_top_left_radius2) {
+  let _pipe = to_string6(border_top_left_radius2);
+  return ((_capture) => {
+    return property("border-top-left-radius", _capture);
+  })(
+    _pipe
+  );
+}
+function border_top_right_radius(border_top_right_radius2) {
+  let _pipe = to_string6(border_top_right_radius2);
+  return ((_capture) => {
+    return property("border-top-right-radius", _capture);
+  })(
+    _pipe
+  );
 }
 function box_sizing(box_sizing2) {
   return property("box-sizing", box_sizing2);
@@ -3017,50 +3025,11 @@ function box_sizing(box_sizing2) {
 function display(display2) {
   return property("display", display2);
 }
-function gap(gap2) {
-  return property("gap", to_string6(gap2));
-}
-function grid_area(grid_area2) {
-  return property("grid-area", grid_area2);
-}
-function grid_template_areas(grid_template_areas2) {
-  return property(
-    "grid-template-areas",
-    (() => {
-      let _pipe = grid_template_areas2;
-      let _pipe$1 = map2(
-        _pipe,
-        (content) => {
-          return '"' + content + '"';
-        }
-      );
-      return join2(_pipe$1, "\n");
-    })()
-  );
-}
 function grid_template_columns(grid_template_columns2) {
   return property("grid-template-columns", grid_template_columns2);
 }
-function grid_template_rows(grid_template_rows2) {
-  return property("grid-template-rows", grid_template_rows2);
-}
 function height(height2) {
   return property("height", to_string6(height2));
-}
-function justify_content(justify) {
-  return property("justify-content", justify);
-}
-function justify_items(justify) {
-  return property("justify-items", justify);
-}
-function margin(margin2) {
-  return property("margin", to_string6(margin2));
-}
-function margin_bottom(margin2) {
-  return property("margin-bottom", to_string6(margin2));
-}
-function margin_top(margin2) {
-  return property("margin-top", to_string6(margin2));
 }
 function max_height(height2) {
   return property("max-height", to_string6(height2));
@@ -3076,6 +3045,15 @@ function padding(padding2) {
 }
 function width(width2) {
   return property("width", to_string6(width2));
+}
+function pseudo_selector(value2, styles) {
+  return new PseudoSelector(value2, styles);
+}
+function first_child(styles) {
+  return pseudo_selector(":first-child", styles);
+}
+function last_child(styles) {
+  return pseudo_selector(":last-child", styles);
 }
 function compose(class$4) {
   return new ClassName(class$4);
@@ -3285,11 +3263,11 @@ function render_stylesheet(content, node2, stylesheet) {
     return node2;
   }
 }
-function compose2(options, view3, cache2) {
+function compose2(options, view4, cache2) {
   let cache$1 = wrap(cache2);
   let stylesheet = to_stylesheet(options);
   return (model) => {
-    let node$1 = view3(model);
+    let node$1 = view4(model);
     let $ = unstyled(get2(cache$1), node$1);
     let result = $[0];
     let node$2 = $[1];
@@ -3313,7 +3291,7 @@ var Sound = class extends CustomType {
 var tch = /* @__PURE__ */ new Sound("berimbau", "tch");
 var tin = /* @__PURE__ */ new Sound("berimbau", "tin");
 var ton = /* @__PURE__ */ new Sound("berimbau", "ton");
-var some_tch = /* @__PURE__ */ new Sound("berimbau", "*-tch");
+var some_tch = /* @__PURE__ */ new Sound("berimbau", "sometch");
 function berimbau_sounds() {
   return from_list2(toList([tch, tin, ton, some_tch]));
 }
@@ -3331,7 +3309,7 @@ var ToolbarModel = class extends CustomType {
 function default_toolbar_model() {
   return new ToolbarModel(
     to_list2(berimbau_sounds()),
-    new None(),
+    new Some(tin),
     90
   );
 }
@@ -3749,16 +3727,6 @@ var AddLine = class extends CustomType {
 var RemoveLine = class extends CustomType {
 };
 
-// build/dev/javascript/lustre/lustre/event.mjs
-function on2(name, handler) {
-  return on(name, handler);
-}
-function on_click(msg) {
-  return on2("click", (_) => {
-    return new Ok(msg);
-  });
-}
-
 // build/dev/javascript/sketch_lustre/sketch/lustre/element/html.mjs
 function div(class$4, attributes, children) {
   return element2("div", class$4, attributes, children);
@@ -3770,6 +3738,14 @@ function img(class$4, attributes) {
 // build/dev/javascript/bateria_gleam/styles.mjs
 function bordered_box() {
   return class$3(toList([outline("2px solid black")]));
+}
+function no_right_bordered_box() {
+  return class$3(
+    toList([
+      border("2px solid black"),
+      border_right_style("none")
+    ])
+  );
 }
 
 // build/dev/javascript/bateria_gleam/utils/color_utils.mjs
@@ -3802,280 +3778,123 @@ function img_for_sound(model, sound) {
   return unwrap2(_pipe$2, toList([]));
 }
 
-// build/dev/javascript/bateria_gleam/utils/list_utils.mjs
-var IndexOutOfBounds = class extends CustomType {
-};
-function at(loop$xs, loop$idx) {
-  while (true) {
-    let xs = loop$xs;
-    let idx = loop$idx;
-    if (xs.hasLength(0)) {
-      return new Error(new IndexOutOfBounds());
-    } else if (xs.atLeastLength(1) && idx === 0) {
-      let x = xs.head;
-      return new Ok(x);
-    } else if (xs.atLeastLength(1) && idx > 0) {
-      let xs_ = xs.tail;
-      loop$xs = xs_;
-      loop$idx = idx - 1;
+// build/dev/javascript/bateria_gleam/views/toolbar_view.mjs
+function toolbar_style() {
+  return class$3(
+    toList([
+      compose(bordered_box()),
+      width(px(900)),
+      height(px(70)),
+      border_radius(px(3)),
+      padding(px(10))
+    ])
+  );
+}
+function sound_equals_current(model, sound) {
+  let _pipe = model.toolbar.current;
+  let _pipe$1 = map(_pipe, (snd) => {
+    return isEqual(snd, sound);
+  });
+  return unwrap(_pipe$1, false);
+}
+function sound_button_outline_color(model, sound) {
+  let $ = model.toolbar.current;
+  if ($ instanceof Some && isEqual($[0], sound)) {
+    let snd = $[0];
+    return toList([
+      border_color(
+        (() => {
+          let _pipe = model.visuals.palette.selected_sound_border;
+          return extract_to_css(_pipe);
+        })()
+      )
+    ]);
+  } else {
+    let $1 = (() => {
+      let _pipe = take_while(
+        model.toolbar.sounds,
+        (x) => {
+          return !isEqual(x, sound);
+        }
+      );
+      return reverse(_pipe);
+    })();
+    if ($1.atLeastLength(1)) {
+      let x = $1.head;
+      let $2 = sound_equals_current(model, x);
+      if ($2) {
+        return toList([
+          border_left_color(
+            (() => {
+              let _pipe = model.visuals.palette.selected_sound_border;
+              return extract_to_css(_pipe);
+            })()
+          )
+        ]);
+      } else {
+        return toList([]);
+      }
     } else {
-      return new Error(new IndexOutOfBounds());
+      return toList([]);
     }
   }
 }
-function split_by(xs, cnt) {
-  if (xs.atLeastLength(1)) {
-    let $ = split(xs, cnt);
-    let line = $[0];
-    let next = $[1];
-    return prepend(line, split_by(next, cnt));
-  } else {
-    return toList([]);
-  }
-}
-
-// build/dev/javascript/bateria_gleam/views/tact.mjs
-function tact_grid_style() {
-  return class$3(
-    toList([
-      display("grid"),
-      gap(px(2)),
-      grid_template_columns("repeat(8, 1fr)"),
-      grid_template_rows("repeat(2, 1fr)"),
-      grid_template_areas(
-        toList(["A A B B B C C C", "A A D D E E F F"])
-      ),
-      justify_items("stretch"),
-      margin(px(0)),
-      padding(px(0)),
-      width(px(200)),
-      height(px(100)),
-      box_sizing("border-box"),
-      border_collapse("collapse")
-    ])
+function sound_buttons(model, sounds) {
+  let _pipe = sounds;
+  return map2(
+    _pipe,
+    (x) => {
+      return div(
+        class$3(
+          (() => {
+            let _pipe$1 = toList([
+              toList([
+                compose(no_right_bordered_box()),
+                height(px(50))
+              ]),
+              sound_button_outline_color(model, x)
+            ]);
+            return concat(_pipe$1);
+          })()
+        ),
+        toList([]),
+        img_for_sound(model, x)
+      );
+    }
   );
 }
-function view(model, track, tact) {
-  let $ = (() => {
-    let _pipe = model.tracks;
-    return at(_pipe, track);
-  })();
-  if (!$.isOk()) {
-    throw makeError(
-      "assignment_no_match",
-      "views/tact",
-      29,
-      "view",
-      "Assignment pattern did not match",
-      { value: $ }
-    );
-  }
-  let current_track = $[0];
-  let $1 = (() => {
-    let _pipe = current_track.tacts;
-    return at(_pipe, tact);
-  })();
-  if (!$1.isOk()) {
-    throw makeError(
-      "assignment_no_match",
-      "views/tact",
-      30,
-      "view",
-      "Assignment pattern did not match",
-      { value: $1 }
-    );
-  }
-  let current_tact = $1[0];
+function view(model) {
   return div(
-    tact_grid_style(),
+    toolbar_style(),
     toList([]),
     toList([
       div(
         class$3(
           toList([
-            compose(bordered_box()),
-            grid_area("A"),
-            background_color(
-              (() => {
-                let _pipe = model.visuals.palette.beat;
-                return extract_to_css(_pipe);
-              })()
+            display("grid"),
+            grid_template_columns("repeat(4, 1fr)"),
+            box_sizing("border-box"),
+            border_collapse("collapse"),
+            first_child(
+              toList([
+                border_top_left_radius(px(3)),
+                border_bottom_left_radius(px(3))
+              ])
             ),
-            display("flex"),
-            align_items("end"),
-            justify_content("center"),
-            padding(px(2))
+            last_child(
+              toList([
+                border_right_style("solid"),
+                border_right_width(px(2)),
+                border_top_right_radius(px(3)),
+                border_bottom_right_radius(px(3))
+              ])
+            )
           ])
         ),
-        toList([on_click(new AddSound(track, tact, 0))]),
-        img_for_sound(model, current_tact.beat)
-      ),
-      div(
-        class$3(
-          toList([
-            compose(bordered_box()),
-            grid_area("B"),
-            background_color(
-              (() => {
-                let _pipe = model.visuals.palette.triole;
-                return extract_to_css(_pipe);
-              })()
-            ),
-            display("flex"),
-            align_items("end"),
-            justify_content("center"),
-            padding(px(2))
-          ])
-        ),
-        toList([on_click(new AddSound(track, tact, 2))]),
-        img_for_sound(model, current_tact.second_of_3)
-      ),
-      div(
-        class$3(
-          toList([
-            compose(bordered_box()),
-            grid_area("C"),
-            background_color(
-              (() => {
-                let _pipe = model.visuals.palette.triole;
-                return extract_to_css(_pipe);
-              })()
-            ),
-            display("flex"),
-            align_items("end"),
-            justify_content("center"),
-            padding(px(2))
-          ])
-        ),
-        toList([on_click(new AddSound(track, tact, 4))]),
-        img_for_sound(model, current_tact.third_of_3)
-      ),
-      div(
-        class$3(
-          toList([
-            compose(bordered_box()),
-            grid_area("D"),
-            background_color(
-              (() => {
-                let _pipe = model.visuals.palette.quadras;
-                return extract_to_css(_pipe);
-              })()
-            ),
-            display("flex"),
-            align_items("end"),
-            justify_content("center"),
-            padding(px(2))
-          ])
-        ),
-        toList([on_click(new AddSound(track, tact, 1))]),
-        img_for_sound(model, current_tact.second_of_4)
-      ),
-      div(
-        class$3(
-          toList([
-            compose(bordered_box()),
-            grid_area("E"),
-            background_color(
-              (() => {
-                let _pipe = model.visuals.palette.off_beat;
-                return extract_to_css(_pipe);
-              })()
-            ),
-            display("flex"),
-            align_items("end"),
-            justify_content("center"),
-            padding(px(2))
-          ])
-        ),
-        toList([on_click(new AddSound(track, tact, 3))]),
-        img_for_sound(model, current_tact.off_beat)
-      ),
-      div(
-        class$3(
-          toList([
-            compose(bordered_box()),
-            grid_area("F"),
-            background_color(
-              (() => {
-                let _pipe = model.visuals.palette.quadras;
-                return extract_to_css(_pipe);
-              })()
-            ),
-            display("flex"),
-            align_items("end"),
-            justify_content("center"),
-            padding(px(2))
-          ])
-        ),
-        toList([on_click(new AddSound(track, tact, 5))]),
-        img_for_sound(model, current_tact.fourh_of_4)
+        toList([]),
+        sound_buttons(model, model.toolbar.sounds)
       )
     ])
-  );
-}
-
-// build/dev/javascript/bateria_gleam/views/track_view.mjs
-function track_line_holder() {
-  return class$3(
-    toList([
-      display("grid"),
-      gap(px(2)),
-      grid_template_columns("repeat(4, 1fr)"),
-      grid_template_rows("repeat(1, 1fr)"),
-      justify_items("begin"),
-      margin(px(10)),
-      margin_top(px(20)),
-      margin_bottom(px(20)),
-      padding(px(0)),
-      width(px(800)),
-      height(px(100)),
-      box_sizing("border-box"),
-      border_collapse("collapse")
-    ])
-  );
-}
-function multiline_track_view(model, track) {
-  let $ = (() => {
-    let _pipe = model.tracks;
-    return at(_pipe, track);
-  })();
-  if (!$.isOk()) {
-    throw makeError(
-      "assignment_no_match",
-      "views/track_view",
-      33,
-      "multiline_track_view",
-      "Assignment pattern did not match",
-      { value: $ }
-    );
-  }
-  let current_track = $[0];
-  let tacts = current_track.tacts;
-  return div(
-    class$3(toList([display("flex")])),
-    toList([]),
-    (() => {
-      let _pipe = tacts;
-      let _pipe$1 = split_by(_pipe, 4);
-      let _pipe$2 = map2(
-        _pipe$1,
-        (line) => {
-          let _pipe$22 = line;
-          return index_map(
-            _pipe$22,
-            (tact, idx) => {
-              return view(model, track, idx);
-            }
-          );
-        }
-      );
-      return map2(
-        _pipe$2,
-        (line) => {
-          return div(track_line_holder(), toList([]), line);
-        }
-      );
-    })()
   );
 }
 
@@ -4102,8 +3921,8 @@ function update(model, msg) {
     return model;
   }
 }
-function view2(model) {
-  return multiline_track_view(model, 0);
+function view3(model) {
+  return view(model);
 }
 function main() {
   let $ = cache(new Ephemeral());
@@ -4111,7 +3930,7 @@ function main() {
     throw makeError(
       "assignment_no_match",
       "bateria_gleam",
-      19,
+      20,
       "main",
       "Assignment pattern did not match",
       { value: $ }
@@ -4119,7 +3938,7 @@ function main() {
   }
   let cache2 = $[0];
   let _pipe = node();
-  let _pipe$1 = compose2(_pipe, view2, cache2);
+  let _pipe$1 = compose2(_pipe, view3, cache2);
   let _pipe$2 = ((_capture) => {
     return simple(init2, update, _capture);
   })(

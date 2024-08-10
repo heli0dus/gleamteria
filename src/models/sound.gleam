@@ -10,7 +10,7 @@ pub const tin = Sound("berimbau", "tin")
 
 pub const ton = Sound("berimbau", "ton")
 
-pub const some_tch = Sound("berimbau", "*-tch")
+pub const some_tch = Sound("berimbau", "sometch")
 
 pub const no_sound = Sound("", "")
 

@@ -9,6 +9,7 @@ import models/visual_config
 import sketch
 import sketch/lustre as sketch_lustre
 import views/tact
+import views/toolbar_view
 import views/track_view
 
 // MAIN ------------------------------------------------------------------------
@@ -57,6 +58,7 @@ fn update(model: Model, msg: Msg) -> Model {
 // VIEW ------------------------------------------------------------------------
 
 fn view(model: Model) {
-  track_view.multiline_track_view(model, 0)
+  toolbar_view.view(model)
+  //track_view.multiline_track_view(model, 0)
   // tact.view(model, 0, 0)
 }
