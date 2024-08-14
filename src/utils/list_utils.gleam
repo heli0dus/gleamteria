@@ -22,3 +22,25 @@ pub fn split_by(xs: List(a), cnt: Int) -> List(List(a)) {
     [] -> []
   }
 }
+
+pub fn put_at(
+  xs: List(a),
+  idx: Int,
+  elem: a,
+) -> Result(List(a), IndexOutOfBounds) {
+  case xs |> list.length < idx {
+    True -> Error(IndexOutOfBounds)
+    False -> {
+      let head = list.take(xs, idx)
+      let tail = list.drop(xs, idx + 1)
+      [head, [elem], tail] |> list.concat |> Ok
+    }
+  }
+}
+
+pub fn zip_with_index(xs: List(a)) -> List(#(a, Int)) {
+  case list.length(xs) {
+    n if n <= 0 -> []
+    n -> xs |> list.zip(list.range(0, n - 1))
+  }
+}

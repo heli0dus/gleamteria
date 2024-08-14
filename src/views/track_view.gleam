@@ -34,12 +34,21 @@ pub fn multiline_track_view(model: data_core.Model, track: Int) {
   let tacts = current_track.tacts
 
   html.div(
-    sketch.class([sketch.display("flex")]),
+    sketch.class([
+      sketch.display("flex"),
+      sketch.flex_wrap("wrap"),
+      sketch.width(size.percent(100)),
+      sketch.justify_content("center"),
+      sketch.background_color(
+        model.visuals.palette.secondary_background |> color_utils.extract_to_css,
+      ),
+    ]),
     [],
     tacts
+      |> list_utils.zip_with_index
       |> list_utils.split_by(4)
       |> list.map(fn(line) {
-        line |> list.index_map(fn(tact, idx) { tact.view(model, track, idx) })
+        line |> list.map(fn(itact) { tact.view(model, track, itact.1) })
       })
       |> list.map(fn(line) { html.div(track_line_holder(), [], line) }),
   )

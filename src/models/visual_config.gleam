@@ -33,23 +33,31 @@ pub fn default_assets() {
 pub type ColorPalette {
   ColorPalette(
     background: Option(Color),
+    secondary_background: Option(Color),
+    third_background: Option(Color),
+    surface: Option(Color),
     beat: Option(Color),
     off_beat: Option(Color),
     triole: Option(Color),
     quadras: Option(Color),
     selected_sound_border: Option(Color),
     cell_hover: Option(Color),
+    text_and_border: Option(Color),
   )
 }
 
 pub fn default_palette() {
   ColorPalette(
     Some(catppuccin.latte() |> catppuccin.base |> catppuccin.to_color),
-    Some(catppuccin.latte() |> catppuccin.red |> catppuccin.to_color),
+    Some(catppuccin.latte() |> catppuccin.mantle |> catppuccin.to_color),
+    Some(catppuccin.latte() |> catppuccin.crust |> catppuccin.to_color),
+    Some(catppuccin.latte() |> catppuccin.surface0 |> catppuccin.to_color),
+    Some(catppuccin.latte() |> catppuccin.maroon |> catppuccin.to_color),
     Some(catppuccin.latte() |> catppuccin.sapphire |> catppuccin.to_color),
     Some(catppuccin.latte() |> catppuccin.mantle |> catppuccin.to_color),
     Some(catppuccin.latte() |> catppuccin.mantle |> catppuccin.to_color),
-    Some(colour.red),
+    Some(catppuccin.latte() |> catppuccin.maroon |> catppuccin.to_color),
     None,
+    Some(catppuccin.latte() |> catppuccin.text |> catppuccin.to_color),
   )
 }

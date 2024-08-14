@@ -6,5 +6,5 @@ pub type Track {
 }
 
 pub fn empty_track(instrument: String) {
-  Track(instrument, list.repeat(tact_model.empty_tact, 4))
+  Track(instrument, list.repeat(tact_model.empty_tact, 8))
 }
